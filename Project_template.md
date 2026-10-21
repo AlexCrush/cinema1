@@ -294,6 +294,18 @@ cat .docker/config.json | base64
 #### Шаг 3
 Добавьте сюда скриншота вывода при вызове https://cinemaabyss.example.com/api/movies и  скриншот вывода event-service после вызова тестов.
 
+![Список фильмов](docs/task3/movies.png)
+
+![Логи events-service](docs/task3/events-logs.png)
+
+### Решение
+
+`docker-build-push` собирает monolith, movies-service, events-service и proxy-service в `ghcr.io/alexcrush/cinema1` и запускается на ветке `cinema`. `api-tests` тоже запускается на `cinema`: тесты ходят в сеть `cinemaabyss-network`, а монолит и movies ждут здоровый Postgres.
+
+В Kubernetes у proxy и events есть Deployment и Service. Ingress отправляет `/api/events` в events-service, остальной трафик — в proxy. В configmap `MOVIES_MIGRATION_PERCENT=100`, поэтому `/api/movies` идёт в movies-service. Секрет `dockerconfigjson` собран из `~/.docker/config.json` и содержит только `ghcr.io`.
+
+Кластер minikube поднят, семь подов в Running. `GET https://cinemaabyss.example.com/api/movies` вернул список фильмов. Тесты kubernetes: 22 запроса, 42 проверки, падений нет. В логе events-service есть produce и consume для movie, user и payment.
+
 
 ## Задание 4
 Для простоты дальнейшего обновления и развертывания вам как архитектуру необходимо так же реализовать helm-чарты для прокси-сервиса и проверить работу 
