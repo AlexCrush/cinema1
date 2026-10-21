@@ -65,6 +65,20 @@
 Необходимые тесты для проверки этого API вызываются при запуске npm run test:local из папки tests/postman 
 Приложите скриншот тестов и скриншот состояния топиков Kafka http://localhost:8090 
 
+### Решение
+
+Прокси на Go лежит в `src/microservices/proxy`. `/health` отвечает сам. `/api/movies` при `GRADUAL_MIGRATION=true` уходит в movies-service с вероятностью `MOVIES_MIGRATION_PERCENT`, остальное остаётся в монолите. При выключенном флаге весь трафик movies идёт в movies-service. `/api/events` уходит в events-service, остальные пути — в монолит.
+
+Проверка процента: при 0 пять запросов попали в монолит, при 100 — в movies-service.
+
+Сервис events на Go лежит в `src/microservices/events`. `POST /api/events/movie`, `/user` и `/payment` пишет событие в одноимённый топик Kafka и возвращает 201. Тот же процесс читает топик и печатает сообщение в лог. В docker-compose сервис уже был описан.
+
+`npm run test:local`: 22 запроса, 42 проверки, падений нет.
+
+![Тесты Postman](docs/task2/postman-tests.png)
+
+![Топики Kafka](docs/task2/kafka-topics.png)
+
 
 ## Задание 3
 
