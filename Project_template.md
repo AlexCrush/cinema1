@@ -381,6 +381,16 @@ minikube tunnel
 https://cinemaabyss.example.com/api/movies
 и приложите скриншот развертывания helm и вывода https://cinemaabyss.example.com/api/movies
 
+### Решение
+
+Шаблоны proxy и events повторяют kubernetes-манифесты и берут образ, порт и ресурсы из `values.yaml`. Образы всех сервисов заменены на `ghcr.io/alexcrush/cinema1/<сервис>:latest`, `imagePullSecrets.dockerconfigjson` скопирован из `dockerconfigsecret.yaml`. В configmap `MOVIES_SERVICE_URL` указывает на `movies-service`, добавлен `EVENTS_SERVICE_URL`.
+
+`helm install cinemaabyss ./src/kubernetes/helm --namespace cinemaabyss --create-namespace` поднял релиз. Kafka один раз упала с `InconsistentClusterIdException` на старых логах minikube; после очистки каталога брокер стал Running. `GET https://cinemaabyss.example.com/api/movies` вернул список фильмов, прокси отправил запрос в movies-service.
+
+![Helm](docs/task4/helm-pods.png)
+
+![Список фильмов](docs/task4/movies.png)
+
 
 # Задание 5
 Компания планирует активно развиваться и для повышения надежности, безопасности, реализации сетевых паттернов типа Circuit Breaker и канареечного деплоя вам как архитектору необходимо развернуть istio и настроить circuit breaker для monolith и movies сервисов.
