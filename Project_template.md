@@ -457,6 +457,14 @@ You can see 21 for the upstream_rq_pending_overflow value which means 21 calls s
 
 Приложите скриншот работы circuit breaker'а
 
+### Решение
+
+`src/kubernetes/circuit-breaker-config.yaml` задаёт DestinationRule для `movies-service` и `monolith`: одно соединение, один ожидающий запрос и выброс после подряд идущих 5xx. Istio 1.30.7 стоит в `istio-system`, namespace `cinemaabyss` помечен `istio-injection=enabled`, у monolith, movies и Fortio есть sidecar.
+
+Fortio, 50 потоков и 500 вызовов `http://movies-service:8081/api/movies`: 9 ответов 200 и 491 ответ 503. В статистике sidecar `upstream_rq_pending_overflow` равен 279 — эти вызовы обрезал circuit breaker.
+
+![Circuit breaker](docs/task5/circuit-breaker.png)
+
 Удаляем все
 ```bash
 istioctl uninstall --purge
